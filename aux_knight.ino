@@ -3,282 +3,234 @@
 ////|         Sketch Created By             |/////
 ////|         Asif Haider Khan              |/////
 ////|       Sketch for AUX_KNIGHT           |/////
-////|     Arduino UNO r3, BTS 7960          |/////
+////|     Arduino AtMEGA 2560, BTS 7960     |/////
 ////|  Radio Frequency (RF) Receiver Module |/////
 ////|         BATTLE BOT (Robowars)         |/////
 //////////////////////////////////////////////////
 
-//Defined pins are for BTS 7960 module
-//a --> Right Motor
-//b --> Left Motor
-#define R_ENa 2
-#define L_ENa 4
-#define R_PWMa 3
-#define L_PWMa 5
-#define R_ENb 8 
-#define L_ENb 7
-#define R_PWMb 6
-#define L_PWMb 9
-#define liftA 10
-#define liftB 14  //Pin A0
+// Source Code starts...
+#define ren_rm 10  //Enable pins for Right Motor
+#define len_rm 11
+#define rpwm_rm 12  //PWM pins for Right Motor
+#define lpwm_rm 13  
+#define ren_lm 4   //Enable pins for Left Motor
+#define len_lm 5
+#define rpwm_lm 6  //PWM pins for Right Motor
+#define lpwm_lm 7
+#define ch1pin 51   //RF channel 1 pin
+#define ch2pin 48   //RF channel 2 pin
+#define ch3pin 50   //RF channel 3 pin
+#define vcc 52
 
-#define MAX_CH 3  //Max number of Channels
-//#define vccPin 13 //RF Receiver module VCC pin
-int CH1pin = 11;  // RF Channel 1
-int CH2pin = 12;  // RF channel 2
-int CH3pin = 13;  // RF Channel 3
-int RFData[3];    // array to store RF data
-int accelerationA = 1; //Right motor Acceleration
-int accelerationB = 1; //Left motor Acceleration
+int acc = 2; //Acceleration
+int topSpeed = 255; // Top Speed
+int ch1 = 0;
+int ch2 = 0;
+int ch3 = 0;
 
 //Function to Accelerate Right Motor forward
-void accelerateA(){
-    digitalWrite(R_ENa,HIGH);
-    digitalWrite(L_ENa,HIGH);
-    for(int i=0;i<=255;i+=accelerationA){
-      analogWrite(R_PWMa,i);
+void accRM(){
+    digitalWrite(ren_rm,HIGH);
+    digitalWrite(len_rm,HIGH);
+    for(int i=0;i<=topSpeed;i+=acc){
+      analogWrite(rpwm_rm,i);
     }
 }
-//Function to Accelerate Left Motor forward
-void accelerateB(){
-    digitalWrite(R_ENb,HIGH);
-    digitalWrite(L_ENb,HIGH);
-    for(int i=0;i<=255;i+=accelerationB){
-      analogWrite(R_PWMb,i);
+//Function to accelerate left motor
+void accLM(){
+    digitalWrite(ren_lm,HIGH);
+    digitalWrite(len_lm,HIGH);
+    for(int i=0;i<=topSpeed;i+=acc){
+      analogWrite(rpwm_lm,i);
     }
 }
 
-//Function to Decelerate RMotor moving in back dir
-void deccelerateA(){
-  digitalWrite(R_ENa,LOW);
-  digitalWrite(L_ENa,LOW);
-  for(int i=255;i>=0;i-=accelerationA){
-    analogWrite(R_PWMa,i);
+//Function to Decelerate Right Motor 
+void deccRM(){
+  digitalWrite(ren_rm,LOW);
+  digitalWrite(len_rm,LOW);
+  for(int i=topSpeed;i>=0;i-=acc){
+    analogWrite(rpwm_rm,i);
   }
 }
 
 
-//Function to Decelerate LeftMotor moving in back dir
-void deccelerateB(){
-  digitalWrite(R_ENb,LOW);
-  digitalWrite(L_ENb,LOW);
-  for(int i=255;i>=0;i-=accelerationB){
-    analogWrite(R_PWMb,i);
+//Function to Decelerate Right Motor 
+void deccLM(){
+  digitalWrite(ren_lm,LOW);
+  digitalWrite(len_lm,LOW);
+  for(int i=topSpeed;i>=0;i-=acc){
+    analogWrite(rpwm_lm,i);
   }
 }
 
 //Func to Accelerate Right Motor Backward
-void RevAccelerateA(){
-    digitalWrite(R_ENa,HIGH);
-    digitalWrite(L_ENa,HIGH);
-    for(int i=0;i<=255;i+=accelerationA){
-      analogWrite(L_PWMa,i);
+void _accRM(){
+    digitalWrite(ren_rm,HIGH);
+    digitalWrite(len_rm,HIGH);
+    for(int i=0;i<=topSpeed;i+=acc){
+      analogWrite(lpwm_rm,i);
     }
 }
 
-//Func to Accelerate Left Motor Backward
-void RevAccelerateB(){
-    digitalWrite(R_ENb,HIGH);
-    digitalWrite(L_ENb,HIGH);
-    for(int i=0;i<=255;i+=accelerationB){
-      analogWrite(L_PWMb,i);
+//Function to Accelerate left Motor Backward
+void _accLM(){
+    digitalWrite(ren_lm,HIGH);
+    digitalWrite(len_lm,HIGH);
+    for(int i=0;i<=topSpeed;i+=acc){
+      analogWrite(lpwm_lm,i);
     }
 }
 
-//Func to Deceleration RM moving in backward dir
-void RevDeccelerateA(){
-  digitalWrite(R_ENa,LOW);
-  digitalWrite(L_ENa,LOW);
-  for(int i=255;i>=0;i-=accelerationA){
-    analogWrite(L_PWMa,i);
+//Func to Decelerate Right Motor 
+//moving in backward dir
+void _deccRM(){
+  digitalWrite(ren_rm,LOW);
+  digitalWrite(ren_rm,LOW);
+  for(int i=topSpeed;i>=0;i-=acc){
+    analogWrite(lpwm_rm,i);
   }
 }
 
 
-//Func to Deceleration RM moving in backward dir
-void RevDeccelerateB(){
-  digitalWrite(R_ENb,LOW);
-  digitalWrite(L_ENb,LOW);
-  for(int i=255;i>=0;i-=accelerationB){
-    analogWrite(L_PWMb,i);
+//Func to Decelerate left Motor 
+// moving in backward dir
+void _deccLM(){
+  digitalWrite(ren_lm,LOW);
+  digitalWrite(ren_lm,LOW);
+  for(int i=topSpeed;i>=0;i-=acc){
+    analogWrite(lpwm_lm,i);
   }
 }
 
-//Function for going forward 
-void goForward(int x){  // x --> delay variable
-   accelerateA();
-   accelerateB();
-   delay(x); 
-   deccelerateA();
-   deccelerateB(); 
-
+//Going Forward Right Motor
+void goFwdRM(){ 
+  accRM();
 }
 
-//Func for going back 
-void goBack(int x){ // x --> delay variable
-  RevAccelerateA();
-  RevAccelerateB();
-  delay(x);
-  RevDeccelerateA();   //Right Motor
-  RevDeccelerateB();  //Left motor
-  //delay(1000);
-  
-
+//Going Forward Left Motor 
+void goFwdLM(){ 
+   accLM();
 }
 
-//Function for going right
-void goRight(int x) { //x ---> delay variable
-   RevAccelerateA();   //Right Motor
-   accelerateB();     //Left Motor
-   delay(x); 
-   RevDeccelerateA();
-   deccelerateB();
+//Going Backward Right Motor
+void goBckRM(){
+  _accRM();
 }
 
-//Function for going left
-void goLeft(int x)  {
-  RevAccelerateB();  //Left Motor
-  accelerateA();  //Right Motor
-  delay(x);
-  RevDeccelerateB();
-  deccelerateA();
+//Going Backward Left Motor
+void goBckLM(){
+  _accLM();
 }
-//function for stopping motor rotation
+//Stop all motors
 void Stop(int x){
-  digitalWrite(R_ENa,LOW);
-  digitalWrite(L_ENa,LOW);
-  digitalWrite(R_ENb,LOW);
-  digitalWrite(L_ENb,LOW);
-  deccelerateA();
-  deccelerateB();
-  RevDeccelerateA();
-  RevDeccelerateB();
-  delay(x*2);
+  digitalWrite(ren_rm,LOW);
+  digitalWrite(len_rm,LOW);
+  deccRM();
+  _deccRM();
+  deccLM();
+  _deccLM();
+  delay(x);
 }
 
-//function for Lifter
-//Function for Lifter UP
-void liftUp(){
-  digitalWrite(liftA,LOW);
-  digitalWrite(liftB,HIGH);
-}
-void liftDown(){
-  digitalWrite(liftA,HIGH);
-  digitalWrite(liftB,LOW);
-}
-void liftStop(){
-  digitalWrite(liftA,HIGH);
-  digitalWrite(liftB,HIGH);
-}
-//Function for Arduino pin configuration
-void pinConfig(){
-  for(int i=0;i < MAX_CH;i++){
-    pinMode(i+11,INPUT);
-  }
-  //pinMode(vccPin,OUTPUT);
-  pinMode(R_ENa,OUTPUT);
-  pinMode(L_ENa,OUTPUT);
-  pinMode(R_PWMa,OUTPUT);
-  pinMode(L_PWMa,OUTPUT);
-  pinMode(liftA,OUTPUT);
-  pinMode(liftB,OUTPUT);
+//Take RF signal values
+void getReadings(){
+  ch1 = pulseIn(ch1pin,HIGH,250000);
+  ch2 = pulseIn(ch2pin,HIGH,250000);
+  ch3 = pulseIn(ch3pin,HIGH,250000);
 }
 
-//Function for taking readings from 
-//Radio Freq receiver module
-void takeReadings(int *data){
-  for(int i=0;i < MAX_CH;i++){
-    data[i] = pulseIn(CH1pin+i,HIGH,250000);
-  } //Radio data stored in data ref array
-}
-
-//Function for printing the data readings
-void PrintReadings(int *data){
-  for(int i=0;i < MAX_CH;i++){
-    Serial.print(data[i]);
-    Serial.print("\t");
-  }
+//Print RF values
+void printReadings(){
+  Serial.print(ch1);
+  Serial.print("\t\t");
+  Serial.print(ch2);
+  Serial.print("\t\t");
+  Serial.print(ch3);
   Serial.println();
 }
 
-//Boolean functions
-//Boolean condition for 'Up' command
-//returns true if Right Stick 'Up' is pressed
-boolean rsUp(int *data){
-  return (data[1] > 1750 && data[1] < 2000);
-}
-//Boolean condition for 'Down' Command
-//returns true if Right Stick 'Down' is pressed
-boolean rsDown(int *data){
-  return (data[1] > 1100 && data[1] < 1200);
-}
-//Boolean condition for 'Right' Command
-//returns true if Right Stick 'Left' is pressed
-boolean rsRight(int *data){
-  return (data[0] > 1750 && data[0] < 2000);
-}
-//Boolean condition for 'Left' Command
-//returns true if Right Stick 'Left' is pressed
-boolean rsLeft(int *data){
-  return (data[0] > 1100 && data[0] < 1200);
+
+//Decode RF signal values
+int Decode(int a,int b){
+  if(a > 1700 && a < 1850){  //Up
+    return 1;
+  }
+  else if(a > 1120 && a < 1250){  //Down
+    return 2;
+  }
+  else if(b > 1700 && b < 1900){  //Right
+    return 3;
+  }
+  else if(b > 1100 && b < 1250){  //Left
+    return 4;
+  }
+  else if((b < 1000 && b > 0) || (a < 1000 && a > 0)){
+    return -1;
+  }
+  else {
+    return 0;
+  }
+  
 }
 
-//Boolean condition for left stick 'Up' command
-//returns true if Right Stick 'Up' is pressed
-boolean lsUp(int *data){
-  return (data[2] > 1750 && data[2] < 2000);
-}
-//Boolean condition for left stick 'Down' Command
-//returns true if left Stick 'Down' is pressed
-boolean lsDown(int *data){
-  return (data[2] > 1100 && data[2] < 1200);
+//Configue Pins
+void pinConfig(){
+  pinMode(ch1pin,INPUT);
+  pinMode(ch2pin,INPUT);
+  pinMode(ch3pin,INPUT);
+  pinMode(ren_rm,OUTPUT);
+  pinMode(len_rm,OUTPUT);
+  pinMode(rpwm_rm,OUTPUT);
+  pinMode(lpwm_rm,OUTPUT);
+  pinMode(ren_lm,OUTPUT);
+  pinMode(len_lm,OUTPUT);
+  pinMode(rpwm_lm,OUTPUT);
+  pinMode(lpwm_lm,OUTPUT);
+  
 }
 
-//Setup function
+
 void setup() {
   // put your setup code here, to run once:
-Serial.begin(9600);
-//digitalWrite(vccPin,HIGH);
-pinConfig();
-takeReadings(RFData);
-PrintReadings(RFData);
+  Serial.begin(9600);
+  pinConfig();
+  getReadings();
+  printReadings();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-//Serial.begin(9600);
-//digitalWrite(vccPin,HIGH);
-pinConfig();
-takeReadings(RFData);
-if(rsUp(RFData)){
-  Serial.println("-----Going---Forward----------");
-  goForward(100);
-  
-}
-else if(rsDown(RFData)){
-  Serial.println("----Going---Back-----------");
-  goBack(100);
-}
-else if(rsRight(RFData)){
-  goRight(100);
-  Serial.println("----Going---Right-----------");
-}
-else if(rsLeft(RFData)){
-  goLeft(100);
-  Serial.println("----Going---Left----------");
-}
-else if(lsUp(RFData)){
-  liftUp();
-  Serial.println("-----Lifter-Up---------");
-}
-else if(lsDown(RFData)){
-  liftDown();
-  Serial.println("----Lifter--Down----------");
-}
-else{
-  liftStop();
-  Stop(50);
-  PrintReadings(RFData);
-}
+  digitalWrite(vcc,HIGH);
+  getReadings();
+  //printReadings();
+  int val = Decode(ch2,ch1);
+  switch(val){
+    case 0: Serial.println("Stop!");Stop(10);break;
+    case 1: Serial.println("Go Forward!");
+            goFwdRM();
+            goFwdLM();
+            break;
+    case 2: Serial.println("Go Back!");
+            goBckRM();
+            goBckLM();
+            break;
+    case 3: Serial.println("Go Right!");
+            goBckRM();
+            goFwdLM();
+            break;
+    case 4: Serial.println("Go Left!");
+            goFwdRM();
+            goBckLM();
+            break;
+    default: Serial.println("Stop!");Stop(10);break; 
+  }
 
 }
+
+//End Source Code
+
+
+
+
+///////////////////// Thank You ////////////////////
