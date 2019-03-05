@@ -17,6 +17,10 @@
 #define len_lm 5
 #define rpwm_lm 6  //PWM pins for Right Motor
 #define lpwm_lm 7
+#define ren_wm $
+#define len_wm $
+#define rpwm_wm $
+#define lpwm_wm $
 #define ch1pin 51   //RF channel 1 pin
 #define ch2pin 48   //RF channel 2 pin
 #define ch3pin 50   //RF channel 3 pin
@@ -36,12 +40,29 @@ void accRM(){
       analogWrite(rpwm_rm,i);
     }
 }
-//Function to accelerate left motor
+
+//Function to accelerate left motor forward
 void accLM(){
     digitalWrite(ren_lm,HIGH);
     digitalWrite(len_lm,HIGH);
     for(int i=0;i<=topSpeed;i+=acc){
       analogWrite(rpwm_lm,i);
+    }
+}
+//Function to accelerate Weapon Motor forward
+void accWM(){
+    digitalWrite(ren_wm,HIGH);
+    digitalWrite(len_wm,HIGH);
+    for(int i=0; i <= 155;i+=acc){
+        analogWrite(rpwm_wm,i);
+    }
+}
+//Function to deccelerate Weapon Motor forward
+void deccWM(){
+    digitalWrite(ren_wm,LOW);
+    digitalWrite(len_wm,LOW);
+    for(int i=155;i>=0;i-=acc){
+        analogWrite(rpwm_wm,i);
     }
 }
 
@@ -55,7 +76,7 @@ void deccRM(){
 }
 
 
-//Function to Decelerate Right Motor 
+//Function to Decelerate Left Motor 
 void deccLM(){
   digitalWrite(ren_lm,LOW);
   digitalWrite(len_lm,LOW);
@@ -79,6 +100,23 @@ void _accLM(){
     digitalWrite(len_lm,HIGH);
     for(int i=0;i<=topSpeed;i+=acc){
       analogWrite(lpwm_lm,i);
+    }
+}
+//Function to Accelerate Weapon Motor backward
+void _accWM(){
+    digitalWrite(ren_wm,HIGH);
+    digitalWrite(len_wm,HIGH);
+    for(int i=0;i<=155;i+=acc){
+        analogWrite(lpwm_wm,i);
+    }    
+}
+
+//function to Deccelerate Weapon Motor Backward
+void _deccWM(){
+    digitalWrite(ren_wm,LOW);
+    digitalWrite(len_wm,LOW);
+    for(int i=155;i>=0;i-=acc){
+        analogWrite(lpwm_wm,i);
     }
 }
 
@@ -122,6 +160,24 @@ void goBckRM(){
 void goBckLM(){
   _accLM();
 }
+
+//Going up Weapon Motor
+void goUpWM(){
+    accWM();
+}
+
+//Going down Weapon Motor
+void goDownWM(){
+    _accWM();
+}
+
+//Stop motor weapon
+void StopWM(int x){
+    deccWM();
+    _deccWM();
+    delay(x);
+}
+
 //Stop all motors
 void Stop(int x){
   digitalWrite(ren_rm,LOW);
@@ -152,18 +208,42 @@ void printReadings(){
 
 
 //Decode RF signal values
-int Decode(int a,int b){
+int Decode(int a,int b,int c){
   if(a > 1700 && a < 1850){  //Up
     return 1;
+    if(b > 1700 && b < 1900){  //Right
+        return 13;
+    }
+    else if(b > 1100 && b < 1250){  //Left
+        return 14;
+    }
+    if(c > 1700 && c < 1850){
+      return 15;
+    }
+    else if(c > 1100 && c < 1250){
+      return 16;
+    }
   }
   else if(a > 1120 && a < 1250){  //Down
     return 2;
+    if(b > 1700 && b < 1900){  //Right
+        return 23;
+    }
+    else if(b > 1100 && b < 1250){  //Left
+        return 24;
+    }
   }
   else if(b > 1700 && b < 1900){  //Right
     return 3;
   }
   else if(b > 1100 && b < 1250){  //Left
     return 4;
+  }
+  else if(c > 1700 && c < 1850){
+      return 5;
+  }
+  else if(c > 1100 && c < 1250){
+      return 6;
   }
   else if((b < 1000 && b > 0) || (a < 1000 && a > 0)){
     return -1;
@@ -204,7 +284,7 @@ void loop() {
   digitalWrite(vcc,HIGH);
   getReadings();
   //printReadings();
-  int val = Decode(ch2,ch1);
+  int val = Decode(ch2,ch1,ch3);
   switch(val){
     case 0: Serial.println("Stop!");Stop(10);break;
     case 1: Serial.println("Go Forward!");
