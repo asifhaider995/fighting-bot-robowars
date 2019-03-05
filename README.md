@@ -10,6 +10,7 @@ Robot Configuration --
 
 
 Key Compontents --
+  -> Radio Frequency Receiver Module
   -> Arduino ATMega 2560 microcontroller board.
   -> BTS 7960 Motor Driver
-  -> Radio Frequency Receiver Module
+  
